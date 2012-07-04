@@ -51,7 +51,7 @@
 				
 				// If evenly divisible by 4 and not evenly divisible by 100,
 				// or is evenly divisible by 400, then a leap year
-				if ( (!(y % 4) && y % 100) || !(y % 400)) 
+				if ( (!(year % 4) && year % 100) || !(year % 400)) 
 				{
 					daysInMonth[1] = 29;
 				}
@@ -106,10 +106,10 @@
 				return this.exec("create", [args], success, fail);
 			},
 			
-			loadAd(function args, success, fail)
+			loadAd: function(args, success, fail)
 			{
 				return this.exec("loadAd", [args], success, fail);
-			}
+			},
 			
 			test: function(msg, success, fail) 
 			{

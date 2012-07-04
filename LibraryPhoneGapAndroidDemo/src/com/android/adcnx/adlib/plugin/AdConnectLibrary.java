@@ -62,6 +62,12 @@ public class AdConnectLibrary extends Plugin
 	
 	private PluginResult createAdBlock(String action, JSONObject params, String callbackID)
 	{
+		if(_lib != null)
+		{
+			return sendAsJSON(Status.ERROR, "There is already an instance of the library" +
+					"currently running.");
+		}
+		
 		if(params == null)
 		{
 			return sendAsJSON(Status.ERROR, "No params passed for action "+action);
@@ -138,49 +144,63 @@ public class AdConnectLibrary extends Plugin
 	
 	private PluginResult loadAd(String action, JSONObject params, String callbackID)
 	{
+		Log.d(LOG, "called load ad function");
+		
 		if(_lib == null)
 		{
+			Log.d(LOG, "_lib is null");
+			
 			return sendAsJSON(Status.ERROR, "Cannot load ad. " +
 					"Have not created AdBlock library yet.");
 		}
 		
+		Log.d(LOG, "creating AdRequest object");
 		AdRequest request = new AdRequest();
+		
+		Log.d(LOG, "AdRequest object created");
 		
 		if(params != null)
 		{
-				request.setTestMode(params.optBoolean("isInTestMode"));
+			Log.d(LOG, "adrequest params are not null, setting them now.");
+			request.setTestMode(params.optBoolean("isInTestMode"));
 				
-				String bday = params.optString("bday");
+			String bday = params.optString("bday");
 				
-				if(!bday.equalsIgnoreCase(""))
+			if(!bday.equalsIgnoreCase(""))
+			{
+				request.setBirthDate(bday);
+			}
+				
+			String gender = params.optString("gender");
+				
+			if(!gender.equalsIgnoreCase(""))
+			{
+				try
 				{
-					request.setBirthDate(bday);
+					Gender g = Gender.valueOf(gender);
+					request.setGender(g);
 				}
-				
-				String gender = params.optString("gender");
-				
-				if(!gender.equalsIgnoreCase(""))
+				catch(Exception e)
 				{
-					try
-					{
-						Gender g = Gender.valueOf(gender);
-						request.setGender(g);
-					}
-					catch(Exception e)
-					{
-						e.printStackTrace();
-					}
+					e.printStackTrace();
 				}
+			}
 				
-				String lang = params.optString("lang");
+			String lang = params.optString("lang");
 				
-				if(!lang.equalsIgnoreCase(""))
-				{
-					request.setLanguage(lang);
-				}
+			if(!lang.equalsIgnoreCase(""))
+			{
+				request.setLanguage(lang);
+			}
+				
+			Log.d(LOG, "Done setting adrequest params");
 		}
 		
+		Log.d(LOG, "Actually loading adrequest");
 		_lib.loadAd(request);
+		
+		Log.d(LOG, "Loading ads.");
+		
 		return sendAsJSON(Status.OK, "Loading ads.");
 	}
 	
