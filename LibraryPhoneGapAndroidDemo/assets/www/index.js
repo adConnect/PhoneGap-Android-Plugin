@@ -23,7 +23,8 @@
 				size: lib.AdSize.BANNER,
 				layout: {
 					gravity: "bottom"
-				}
+				},
+				defaultIsProduction: true
 		}
 		
 		lib.create(config, 
@@ -49,7 +50,41 @@
 					};
 					
 					console.log("Loading ad using adRequest");
-					lib.loadAd(adRequest, success, fail);
+					lib.loadAd(adRequest, function(resp){
+						
+						if(resp.msg)
+						{
+							console.log(resp.msg);
+						}
+						
+						else
+						{
+							console.log(resp);
+						}
+						
+						setTimeout(function(){
+							
+							lib.hide(function(resp)
+									{
+										if(resp.msg)
+										{
+											console.log(resp.msg);
+										}
+										
+										else
+										{
+											console.log(resp);
+										}
+										
+										setTimeout(function(){
+											
+											lib.show(success, fail);
+										}, 15000)
+										
+									}, fail);
+						}, 15000);
+						
+					}, fail);
 				
 				}, fail);
 	}

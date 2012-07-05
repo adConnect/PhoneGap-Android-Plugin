@@ -111,6 +111,31 @@
 				return this.exec("loadAd", [args], success, fail);
 			},
 			
+			pause: function(success, fail)
+			{
+				return this.exec("pause", [], success, fail);
+			},
+			
+			resume: function(success, fail)
+			{
+				return this.exec("resume", [], success, fail);
+			},
+			
+			hide: function(success, fail)
+			{
+				return this.exec("hide", [], success, fail);
+			},
+			
+			show: function(success, fail)
+			{
+				return this.exec("show", [], success, fail);
+			},
+			
+			isCreated: function(success, fail)
+			{
+				return this.exec("isCreated", [], success, fail);
+			},
+			
 			test: function(msg, success, fail) 
 			{
 				return PhoneGap.exec(success,    //Success callback from the plugin
