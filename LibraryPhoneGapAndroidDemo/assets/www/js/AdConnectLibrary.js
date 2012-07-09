@@ -2,11 +2,9 @@
 	
 	var AdConnectLibrary = function(){};
 
-	AdConnectLibrary.prototype = {
-			
+	AdConnectLibrary.prototype = 
+	{
 			_pluginName: "AdConnectLibrary",
-			
-			MAX_AGE: 122,
 			
 			Language: {
 				ENGLISH: "EN",
@@ -18,6 +16,8 @@
 				FEMALE: "FEMALE",
 				ALL: "ALL"
 			},
+			
+			MAX_AGE: 122,
 			
 			BDay: function(year, month, day)
 			{
@@ -74,23 +74,28 @@
 				return year+month+day+"";
 			},
 			
-			AdSize: {
-				BANNER:{
+			AdSize: 
+			{
+				BANNER:
+				{
 					width: 320,
 					height: 50
 				},
 				
-				TABLET_BANNER:{
+				TABLET_BANNER:
+				{
 					width: 468,
 					height: 60
 				},
 				
-				TABLET_LEADERBOARD: {
+				TABLET_LEADERBOARD: 
+				{
 					width: 728,
 					height: 90
 				},
 				
-				TABLET_RECT: {
+				TABLET_RECT: 
+				{
 					width: 300,
 					height: 250
 				}
@@ -184,15 +189,6 @@
 			addOnReceiveAdListener: function(success, fail, doForce)
 			{
 				return this.addListener("receiveAdListener", doForce, success, fail);
-			},
-			
-			test: function(msg, success, fail) 
-			{
-				return PhoneGap.exec(success,    //Success callback from the plugin
-					      fail,     //Error callback from the plugin
-					      'AdConnectLibrary',  //Tell PhoneGap to run "DirectoryListingPlugin" Plugin
-					      'test',              //Tell plugin, which action we want to perform
-					      [msg]);
 			}
 	};
 		

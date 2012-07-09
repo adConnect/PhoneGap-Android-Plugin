@@ -1,3 +1,12 @@
+/**
+ * 	AdConnectLibrary.java
+ * 	AdConnect PhoneGap plugin (Android)
+ *
+ * 	Created by Mohamad Kouli.
+ * 	Copyright 2012 Mohamad Kouli. All rights reserved.
+ * 	MIT Licensed
+ *
+ */
 package com.android.adcnx.adlib.plugin;
 
 import java.util.HashMap;
@@ -24,14 +33,27 @@ import com.android.adcnx.adlib.AdRequest.Gender;
 import com.android.adcnx.adlib.AdSize;
 import com.phonegap.api.Plugin;
 
+/**
+ * 
+ * @author Mohamad Kouli (KoulMomo)
+ * 
+ * Tutorial used to learn how to write a phonegap plugin: 
+ * http://wiki.phonegap.com/w/page/36753494/How%20to%20Create%20a%20PhoneGap%20Plugin%20for%20Android
+ * 
+ * Code was also adapted from https://github.com/phonegap/phonegap-plugins/blob/master/Android/PhoneListener/PhoneListener.java
+ * written by tommy-carlos williams (github username: devgeeks). 
+ * Most notably for the use of {@link PluginResult#setKeepCallback(boolean)}
+ */
 public class AdConnectLibrary extends Plugin implements AdListener
 {	
-	private static final String LOG = "AdConnectLibraryPhoneGapPlugin";
-	private static AdBlock _lib = null;
-	private static AdRequest _currAdRequest = null;
+	private static final String LOG_TAG = "AdConnectLibraryPhoneGapPlugin";
+	private static final boolean DO_LOG = true;
 	
 	private static final int MAX_LISTENERS = 5;
 	private static final HashMap<String, String> _listeners = new HashMap<String, String>(MAX_LISTENERS);
+	
+	private static AdBlock _lib = null;
+	private static AdRequest _currAdRequest = null;
 	
 	public AdConnectLibrary()
 	{
@@ -44,224 +66,9 @@ public class AdConnectLibrary extends Plugin implements AdListener
 		_listeners.put("dismissScreenListener", null);
 	}
 	
-	private int getGravity(String gravity)
-	{
-		if(gravity.equalsIgnoreCase("bottom"))
-		{
-			return Gravity.BOTTOM;
-		}
-		
-		return Gravity.NO_GRAVITY;
-	}
-	
-	private PluginResult sendAsJSON(Status status, String msg)
-	{
-		JSONObject message = new JSONObject();
-		try
-		{
-			message.put("msg", msg);
-		}
-		catch (JSONException e)
-		{
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-			
-			return new PluginResult(status, msg);
-		}
-		
-		return new PluginResult(status, message);
-	}
-	
-	private void updateAdBlockCreation(String callbackID)
-	{
-		PluginResult result = sendAsJSON(Status.OK, "Successfully created AdBlock");
-		result.setKeepCallback(false);
-		
-		this.success(result, callbackID);
-	}
-	
-	private PluginResult createAdBlock(JSONObject params, final String callbackID)
-	{
-		final String action = "create";
-		
-		if(_lib != null)
-		{
-			return sendAsJSON(Status.ERROR, "There is already an instance of the library" +
-					"currently running.");
-		}
-		
-		if(params == null)
-		{
-			return sendAsJSON(Status.ERROR, "No params passed for action "+action);
-		}
-		
-		//_createCallbackID = callbackID;
-		Log.d(LOG, "Creating a new AdBlock");
-		
-		final String publisherID = params.optString("id");
-		
-		if(publisherID.equalsIgnoreCase(""))
-		{
-			return sendAsJSON(Status.ERROR, "Missing publisher id");
-		}
-		
-		Log.d(LOG, "have publisher id.");
-		
-		JSONObject size = params.optJSONObject("size");
-		
-		if(size == null)
-		{
-			return sendAsJSON(Status.ERROR, "Missing AdSize");
-		}
-		
-		final int width = size.optInt("width");
-		final int height = size.optInt("height");
-		
-		if(width < 1 || height < 1)
-		{
-			return sendAsJSON(Status.ERROR, "AdSize is too small");
-		}
-		
-		final JSONObject layout = params.optJSONObject("layout");
-		
-		Log.d(LOG, "have AdSize");
-		
-		Handler h = new Handler(ctx.getContext().getMainLooper());
-		final AdConnectLibrary self = this;
-		h.post(new Runnable(){
-			
-			public void run()
-			{
-				_lib = new AdBlock(ctx.getContext(), new AdSize(width, height), publisherID);
-				
-				_lib.setAdListener(self);
-				LayoutParams layoutParams = new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
-				
-				if(layout != null)
-				{
-					Log.d(LOG, "setting the layout");
-					
-					String gravity = layout.optString("gravity");
-					if(!gravity.equalsIgnoreCase(""))
-					{
-						Log.d(LOG, "Have gravity: "+gravity);
-						layoutParams.gravity = getGravity(gravity);
-					}
-				}
-				
-				Log.d(LOG, "have a new lib");
-				
-				((LinearLayout) webView.getParent()).addView(_lib, layoutParams);
-				
-				Log.d(LOG, "successfully added adblock to webview");
-				
-				updateAdBlockCreation(callbackID);
-			}
-			
-		});
-		
-		PluginResult result = sendAsJSON(Status.NO_RESULT, "Awaiting AdBlockCreation"); 
-		result.setKeepCallback(true);
-		return result;
-	}
-	
-	private PluginResult loadAd(JSONObject params, String callbackID)
-	{
-		Log.d(LOG, "called load ad function");
-		
-		if(_lib == null)
-		{
-			Log.d(LOG, "_lib is null");
-			
-			return sendAsJSON(Status.ERROR, "Cannot load ad. " +
-					"Have not created AdBlock library yet.");
-		}
-		
-		Log.d(LOG, "creating AdRequest object");
-		AdRequest request = new AdRequest();
-		
-		Log.d(LOG, "AdRequest object created");
-		
-		if(params != null)
-		{
-			Log.d(LOG, "adrequest params are not null, setting them now.");
-			request.setTestMode(params.optBoolean("isInTestMode"));
-				
-			String bday = params.optString("bday");
-				
-			if(!bday.equalsIgnoreCase(""))
-			{
-				request.setBirthDate(bday);
-			}
-				
-			String gender = params.optString("gender");
-				
-			if(!gender.equalsIgnoreCase(""))
-			{
-				try
-				{
-					Gender g = Gender.valueOf(gender);
-					request.setGender(g);
-				}
-				catch(Exception e)
-				{
-					e.printStackTrace();
-				}
-			}
-				
-			String lang = params.optString("lang");
-				
-			if(!lang.equalsIgnoreCase(""))
-			{
-				request.setLanguage(lang);
-			}
-				
-			Log.d(LOG, "Done setting adrequest params");
-		}
-		
-		Log.d(LOG, "Actually loading adrequest");
-		
-		_currAdRequest = request;
-		_lib.loadAd(request);
-		
-		Log.d(LOG, "Loading ads.");
-		
-		return sendAsJSON(Status.OK, "Loading ads.");
-	}
-	
-	private PluginResult pause(String callbackID)
-	{
-		if(_lib == null)
-		{
-			return sendAsJSON(Status.ERROR, "AdConnect Library is not created.");
-		}
-		
-		_lib.stopLoading();
-		
-		return sendAsJSON(Status.OK, "Stopped loading ads.");
-	}
-	
-	private PluginResult resume(String callbackID)
-	{
-		if(_lib == null)
-		{
-			return sendAsJSON(Status.ERROR, "AdConnect Library is not created.");
-		}
-		
-		if(_currAdRequest == null)
-		{
-			return sendAsJSON(Status.ERROR, "No previous AdRequest found to resume.");
-		}
-		
-		_lib.loadAd(_currAdRequest);
-		
-		return sendAsJSON(Status.OK, "Resumed loading ads.");
-	}
-	
 	@Override
 	public PluginResult execute(String action, JSONArray data, String callbackID)
 	{
-		
 		JSONObject params = data.optJSONObject(0);
 			
 		if(action.equalsIgnoreCase("create"))
@@ -307,92 +114,241 @@ public class AdConnectLibrary extends Plugin implements AdListener
 		return sendAsJSON(Status.INVALID_ACTION, "Unsupported Operation: "+action);
 	}
 	
-	private synchronized PluginResult addListener(JSONObject params, String callbackID)
+	private PluginResult createAdBlock(JSONObject params, final String callbackID)
 	{
-		Log.d(LOG, "Adding listener");
-		if(_lib == null)
-		{
-			return sendAsJSON(Status.ERROR, "Library not created.");
-		}
+		final String action = "create";
 		
-		Log.d(LOG, "Lib is not null.");
+		if(_lib != null)
+		{
+			return sendAsJSON(Status.ERROR, "There is already an instance of the library" +
+					"currently running.");
+		}
 		
 		if(params == null)
 		{
-			return sendAsJSON(Status.ERROR, "No params have been passed");
+			return sendAsJSON(Status.ERROR, "No params passed for action "+action);
 		}
 		
-		Log.d(LOG, "params are not null");
+		//_createCallbackID = callbackID;
+		Log.d(LOG_TAG, "Creating a new AdBlock");
 		
-		String listener = params.optString("listener");
+		final String publisherID = params.optString("id");
 		
-		Log.d(LOG, "listener is:" +listener);
-		
-		if(listener.equalsIgnoreCase(""))
+		if(publisherID.equalsIgnoreCase(""))
 		{
-			return sendAsJSON(Status.ERROR, "No listener has been passed.");
+			return sendAsJSON(Status.ERROR, "Missing publisher id");
 		}
 		
-		String oldCallbackID = _listeners.remove(listener); 
+		Log.d(LOG_TAG, "have publisher id.");
 		
-		Log.d(LOG, "current callbackID for listener: "+oldCallbackID);
-		if(oldCallbackID == null)
+		JSONObject size = params.optJSONObject("size");
+		
+		if(size == null)
 		{
-			_listeners.put(listener, callbackID);
+			return sendAsJSON(Status.ERROR, "Missing AdSize");
+		}
+		
+		final int width = size.optInt("width");
+		final int height = size.optInt("height");
+		
+		if(width < 1 || height < 1)
+		{
+			return sendAsJSON(Status.ERROR, "AdSize is too small");
+		}
+		
+		final JSONObject layout = params.optJSONObject("layout");
+		
+		Log.d(LOG_TAG, "have AdSize");
+		
+		Handler h = new Handler(ctx.getContext().getMainLooper());
+		final AdConnectLibrary self = this;
+		h.post(new Runnable(){
 			
-			PluginResult result = sendAsJSON(Status.NO_RESULT, listener+" added successfully.");
-			result.setKeepCallback(true);
-			
-			return result;
-		}
-		
-		else
-		{
-			if(params.optBoolean("doForce"))
+			public void run()
 			{
-				_listeners.put(listener,  callbackID);
-				PluginResult result = sendAsJSON(Status.NO_RESULT, listener+"added successfully.");
+				_lib = new AdBlock(ctx.getContext(), new AdSize(width, height), publisherID);
 				
-				result.setKeepCallback(true);
+				_lib.setAdListener(self);
+				LayoutParams layoutParams = new LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
 				
-				return result;
+				if(layout != null)
+				{
+					Log.d(LOG_TAG, "setting the layout");
+					
+					String gravity = layout.optString("gravity");
+					if(!gravity.equalsIgnoreCase(""))
+					{
+						Log.d(LOG_TAG, "Have gravity: "+gravity);
+						layoutParams.gravity = getGravity(gravity);
+					}
+				}
+				
+				Log.d(LOG_TAG, "have a new lib");
+				
+				((LinearLayout) webView.getParent()).addView(_lib, layoutParams);
+				
+				Log.d(LOG_TAG, "successfully added adblock to webview");
+				
+				updateAdBlockCreation(callbackID);
 			}
 			
-			return sendAsJSON(Status.ERROR, listener+" previously added. Cannot add again unless sent the doForce param");
-		}
-	}
-
-	private PluginResult isCreated(String callbackID)
-	{
-		JSONObject response = new JSONObject();
+		});
 		
-		boolean created = _lib != null;
-		try
-		{
-			response.put("isCreated", created);
-			response.put("msg", "The library has already been created");
-			
-			return new PluginResult(Status.OK, response);
-		}
-		catch (JSONException e)
-		{
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-			return new PluginResult(Status.JSON_EXCEPTION, "Something went wrong.");
-		}
+		PluginResult result = sendAsJSON(Status.NO_RESULT, "Awaiting AdBlockCreation"); 
+		result.setKeepCallback(true);
+		return result;
 	}
-
-	private void updateShowStatus(String callbackID)
+	
+	private int getGravity(String gravity)
 	{
-		PluginResult result = sendAsJSON(Status.OK, "Shown");
+		if(gravity.equalsIgnoreCase("bottom"))
+		{
+			return Gravity.BOTTOM;
+		}
+		
+		return Gravity.NO_GRAVITY;
+	}
+	
+	private void updateAdBlockCreation(String callbackID)
+	{
+		PluginResult result = sendAsJSON(Status.OK, "Successfully created AdBlock");
 		result.setKeepCallback(false);
 		
 		this.success(result, callbackID);
 	}
+	
+	private PluginResult loadAd(JSONObject params, String callbackID)
+	{
+		Log.d(LOG_TAG, "called load ad function");
+		
+		if(_lib == null)
+		{
+			Log.d(LOG_TAG, "_lib is null");
+			
+			return sendAsJSON(Status.ERROR, "Cannot load ad. " +
+					"Have not created AdBlock library yet.");
+		}
+		
+		Log.d(LOG_TAG, "creating AdRequest object");
+		AdRequest request = new AdRequest();
+		
+		Log.d(LOG_TAG, "AdRequest object created");
+		
+		if(params != null)
+		{
+			Log.d(LOG_TAG, "adrequest params are not null, setting them now.");
+			request.setTestMode(params.optBoolean("isInTestMode"));
+				
+			String bday = params.optString("bday");
+				
+			if(!bday.equalsIgnoreCase(""))
+			{
+				request.setBirthDate(bday);
+			}
+				
+			String gender = params.optString("gender");
+				
+			if(!gender.equalsIgnoreCase(""))
+			{
+				try
+				{
+					Gender g = Gender.valueOf(gender);
+					request.setGender(g);
+				}
+				catch(Exception e)
+				{
+					e.printStackTrace();
+				}
+			}
+				
+			String lang = params.optString("lang");
+				
+			if(!lang.equalsIgnoreCase(""))
+			{
+				request.setLanguage(lang);
+			}
+				
+			Log.d(LOG_TAG, "Done setting adrequest params");
+		}
+		
+		Log.d(LOG_TAG, "Actually loading adrequest");
+		
+		_currAdRequest = request;
+		_lib.loadAd(request);
+		
+		Log.d(LOG_TAG, "Loading ads.");
+		
+		return sendAsJSON(Status.OK, "Loading ads.");
+	}
+	
+	private PluginResult pause(String callbackID)
+	{
+		if(_lib == null)
+		{
+			return sendAsJSON(Status.ERROR, "AdConnect Library is not created.");
+		}
+		
+		_lib.stopLoading();
+		
+		return sendAsJSON(Status.OK, "Stopped loading ads.");
+	}
+	
+	private PluginResult resume(String callbackID)
+	{
+		if(_lib == null)
+		{
+			return sendAsJSON(Status.ERROR, "AdConnect Library is not created.");
+		}
+		
+		if(_currAdRequest == null)
+		{
+			return sendAsJSON(Status.ERROR, "No previous AdRequest found to resume.");
+		}
+		
+		_lib.loadAd(_currAdRequest);
+		
+		return sendAsJSON(Status.OK, "Resumed loading ads.");
+	}
+	
+	private PluginResult hide(final String callbackID)
+	{
+		Log.d(LOG_TAG, "Hide function called.");
+		if(_lib == null)
+		{
+			return sendAsJSON(Status.ERROR, "AdConnect Library not created.");
+		}
+		
+		Handler h = new Handler(ctx.getContext().getMainLooper());
+		h.post(new Runnable(){
 
+			public void run()
+			{
+				// TODO Auto-generated method stub
+				_lib.stopLoading();
+				_lib.setVisibility(View.GONE);
+				
+				updateHideStatus(callbackID);
+			}
+			
+		});
+		
+		PluginResult result = sendAsJSON(Status.NO_RESULT, "Hiding...");
+		result.setKeepCallback(true);
+		
+		return result;
+	}
+	
+	private void updateHideStatus(String callbackID)
+	{
+		PluginResult result = sendAsJSON(Status.OK, "Successfully hidden view.");
+		result.setKeepCallback(false);
+		
+		this.success(result, callbackID);
+	}
+	
 	private PluginResult show(final String callbackID)
 	{
-		Log.d(LOG, "Show function called.");
+		Log.d(LOG_TAG, "Show function called.");
 		if(_lib == null)
 		{
 			return sendAsJSON(Status.ERROR, "AdConnect Library not created.");
@@ -420,45 +376,107 @@ public class AdConnectLibrary extends Plugin implements AdListener
 		return result;
 	}
 	
-	private void updateHideStatus(String callbackID)
+	private void updateShowStatus(String callbackID)
 	{
-		PluginResult result = sendAsJSON(Status.OK, "Successfully hidden view.");
+		PluginResult result = sendAsJSON(Status.OK, "Shown");
 		result.setKeepCallback(false);
 		
 		this.success(result, callbackID);
 	}
 	
-	private PluginResult hide(final String callbackID)
+	private PluginResult isCreated(String callbackID)
 	{
-		Log.d(LOG, "Hide function called.");
+		JSONObject response = new JSONObject();
+		
+		boolean created = _lib != null;
+		try
+		{
+			response.put("isCreated", created);
+			response.put("msg", "The library has already been created");
+			
+			return new PluginResult(Status.OK, response);
+		}
+		catch (JSONException e)
+		{
+			return new PluginResult(Status.JSON_EXCEPTION, "The library has already been created.");
+		}
+	}
+	
+	private synchronized PluginResult addListener(JSONObject params, String callbackID)
+	{
+		Log.d(LOG_TAG, "Adding listener");
 		if(_lib == null)
 		{
-			return sendAsJSON(Status.ERROR, "AdConnect Library not created.");
+			return sendAsJSON(Status.ERROR, "Library not created.");
 		}
 		
-		Handler h = new Handler(ctx.getContext().getMainLooper());
-		h.post(new Runnable(){
-
-			public void run()
+		Log.d(LOG_TAG, "Lib is not null.");
+		
+		if(params == null)
+		{
+			return sendAsJSON(Status.ERROR, "No params have been passed");
+		}
+		
+		Log.d(LOG_TAG, "params are not null");
+		
+		String listener = params.optString("listener");
+		
+		Log.d(LOG_TAG, "listener is:" +listener);
+		
+		if(listener.equalsIgnoreCase(""))
+		{
+			return sendAsJSON(Status.ERROR, "No listener has been passed.");
+		}
+		
+		String oldCallbackID = _listeners.remove(listener); 
+		
+		Log.d(LOG_TAG, "current callbackID for listener: "+oldCallbackID);
+		if(oldCallbackID == null)
+		{
+			_listeners.put(listener, callbackID);
+			
+			PluginResult result = sendAsJSON(Status.NO_RESULT, listener+" added successfully.");
+			result.setKeepCallback(true);
+			
+			return result;
+		}
+		
+		else
+		{
+			if(params.optBoolean("doForce"))
 			{
-				// TODO Auto-generated method stub
-				_lib.stopLoading();
-				_lib.setVisibility(View.GONE);
+				_listeners.put(listener,  callbackID);
+				PluginResult result = sendAsJSON(Status.NO_RESULT, listener+"added successfully.");
 				
-				updateHideStatus(callbackID);
+				result.setKeepCallback(true);
+				
+				return result;
 			}
 			
-		});
+			return sendAsJSON(Status.ERROR, listener+" previously added. Cannot add again unless sent the doForce param");
+		}
+	}
+	
+	private PluginResult sendAsJSON(Status status, String msg)
+	{
+		JSONObject message = new JSONObject();
+		try
+		{
+			message.put("msg", msg);
+		}
+		catch (JSONException e)
+		{
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			
+			return new PluginResult(status, msg);
+		}
 		
-		PluginResult result = sendAsJSON(Status.NO_RESULT, "Hiding...");
-		result.setKeepCallback(true);
-		
-		return result;
+		return new PluginResult(status, message);
 	}
 	
 	public void OnFailedToReceiveAd(Ad ad, ErrorCode code)
 	{
-		//TODO
 		String callbackID = _listeners.get("failedToReceiveAdListener");
 		
 		if(callbackID != null)
@@ -507,11 +525,11 @@ public class AdConnectLibrary extends Plugin implements AdListener
 
 	public void onReceiveAd(Ad ad)
 	{
-		Log.d(LOG, "Received ad in Phonegap Plugin. About to alert front-end.");
+		Log.d(LOG_TAG, "Received ad in Phonegap Plugin. About to alert front-end.");
 		
 		String callbackID = _listeners.get("receiveAdListener");
 		
-		Log.d(LOG, "callbackID: "+callbackID);
+		Log.d(LOG_TAG, "callbackID: "+callbackID);
 		defaultListenerUpdate("received ad.", callbackID);
 	}
 	
@@ -525,5 +543,4 @@ public class AdConnectLibrary extends Plugin implements AdListener
 			this.success(result, callbackID);
 		}
 	}
-
 }
