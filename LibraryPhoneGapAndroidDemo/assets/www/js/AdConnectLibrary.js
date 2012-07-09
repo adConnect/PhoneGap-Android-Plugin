@@ -136,6 +136,41 @@
 				return this.exec("isCreated", [], success, fail);
 			},
 			
+			addListener(listener, doForce, success, fail)
+			{
+				var msg = {
+						listener: listener,
+						doForce: doForce
+				};
+				
+				return this.exec("addListener", [msg], success, fail);
+			},
+			
+			addOnFailedToReceiveAdListener(success, fail, doForce)
+			{
+				return this.addListener("onFailedToReceiveAdListener", doForce, success, fail);
+			},
+			
+			addOnDismissScreenListener(success, fail, doForce)
+			{
+				return this.addListener("onDismissScreenListener", doForce, success, fail);
+			},
+			
+			addOnLeaveApplicationListener(success, fail, doForce)
+			{
+				return this.addListener("onLeaveApplicationListener", doForce, success, fail);
+			},
+			
+			addOnPresentScreenListener(success, fail, doForce)
+			{
+				return this.addListener("onPresentScreenListener", doForce, success, fail);
+			},
+			
+			addOnReceiveAdListener(success, fail, doForce)
+			{
+				return this.addListener("onReceiveAdListener", doForce, success, fail);
+			},
+			
 			test: function(msg, success, fail) 
 			{
 				return PhoneGap.exec(success,    //Success callback from the plugin
