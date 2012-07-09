@@ -1,6 +1,18 @@
 (function(){
 	
 	document.addEventListener("deviceready", run, false);
+	document.addEventListener("pause", onPause, false);
+	document.addEventListener("resume", onResume, false);
+	
+	function onPause()
+	{
+		alert("paused");
+	}
+	
+	function onResume()
+	{
+		alert("resumed");
+	}
 	
 	function run()
 	{
@@ -23,8 +35,7 @@
 				size: lib.AdSize.BANNER,
 				layout: {
 					gravity: "bottom"
-				},
-				defaultIsProduction: true
+				}
 		}
 		
 		lib.create(config, 

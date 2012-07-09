@@ -1,5 +1,7 @@
 package com.android.adcnx.adlib.plugin;
 
+import java.util.HashMap;
+
 import org.apache.cordova.api.PluginResult;
 import org.apache.cordova.api.PluginResult.Status;
 import org.json.JSONArray;
@@ -26,10 +28,21 @@ public class AdConnectLibrary extends Plugin implements AdListener
 {	
 	private static final String LOG = "AdConnectLibraryPhoneGapPlugin";
 	private static AdBlock _lib = null;
-	
 	private static AdRequest _currAdRequest = null;
 	
-	private static boolean _defaultIsTesting = true;
+	private static final int MAX_LISTENERS = 5;
+	private static final HashMap<String, String> _listeners = new HashMap<String, String>(MAX_LISTENERS);
+	
+	public AdConnectLibrary()
+	{
+		super();
+		
+		_listeners.put("failedToReceiveAdListener", null);
+		_listeners.put("receiveAdListener", null);
+		_listeners.put("presentScreenListener", null);
+		_listeners.put("leaveApplicationListener", null);
+		_listeners.put("dismissScreenListener", null);
+	}
 	
 	private int getGravity(String gravity)
 	{
@@ -81,8 +94,6 @@ public class AdConnectLibrary extends Plugin implements AdListener
 		{
 			return sendAsJSON(Status.ERROR, "No params passed for action "+action);
 		}
-		
-		_defaultIsTesting = params.optBoolean("defaultIsTesting");
 		
 		//_createCallbackID = callbackID;
 		Log.d(LOG, "Creating a new AdBlock");
@@ -288,9 +299,62 @@ public class AdConnectLibrary extends Plugin implements AdListener
 			return isCreated(callbackID);
 		}
 		
+		else if(action.equalsIgnoreCase("addListener"))
+		{
+			return addListener(params, callbackID);
+		}
+		
 		return sendAsJSON(Status.INVALID_ACTION, "Unsupported Operation: "+action);
 	}
 	
+	private synchronized PluginResult addListener(JSONObject params, String callbackID)
+	{
+		if(_lib == null)
+		{
+			return sendAsJSON(Status.ERROR, "Library not created.");
+		}
+		
+		if(params == null)
+		{
+			return sendAsJSON(Status.ERROR, "No params have been passed");
+		}
+		
+		String listener = params.optString("listener");
+		
+		if(listener.equalsIgnoreCase(""))
+		{
+			return sendAsJSON(Status.ERROR, "No listener has been passed.");
+		}
+		
+		String oldCallbackID = _listeners.remove(listener); 
+		
+		if(oldCallbackID == null)
+		{
+			_listeners.put(listener, callbackID);
+			
+			PluginResult result = sendAsJSON(Status.NO_RESULT, listener+" added successfully.");
+			result.setKeepCallback(true);
+			
+			return result;
+		}
+		
+		else
+		{
+			if(params.optBoolean("doForce"))
+			{
+				
+				_listeners.put(listener,  callbackID);
+				PluginResult result = sendAsJSON(Status.NO_RESULT, listener+"added successfully.");
+				
+				result.setKeepCallback(true);
+				
+				return result;
+			}
+			
+			return sendAsJSON(Status.ERROR, listener+" previously added. Cannot add again unless sent the doForce param");
+		}
+	}
+
 	private PluginResult isCreated(String callbackID)
 	{
 		JSONObject response = new JSONObject();
@@ -384,47 +448,71 @@ public class AdConnectLibrary extends Plugin implements AdListener
 		
 		return result;
 	}
-
+	
 	public void OnFailedToReceiveAd(Ad ad, ErrorCode code)
 	{
-		// TODO Auto-generated method stub
-		Log.d(LOG, "Failed to receive ad.");
-		Log.d(LOG, "ERROR CODE: "+code.toString());
+		//TODO
+		String callbackID = _listeners.get("failedToReceiveAdListener");
 		
-		if(_currAdRequest != null)
+		if(callbackID != null)
 		{
-			_lib.loadAd(_currAdRequest);
-		}
-		
-		else
-		{
-			AdRequest req = new AdRequest();
-			req.setTestMode(_defaultIsTesting);
-			_lib.loadAd(req);
+			JSONObject message = new JSONObject();
+			
+			try
+			{
+				message.put("msg", "Failed to receive ad: "+ad.toString());
+				message.put("error", code.name());
+				
+				this.success(message, callbackID);
+			}
+			catch (JSONException e)
+			{
+				//e.printStackTrace();
+				PluginResult result = new PluginResult(Status.OK, message);
+				result.setKeepCallback(true);
+				
+				this.success("Failed to receive ad: "+ad.toString()+"\n" +
+						"error: "+code.name(), callbackID);
+			}
 		}
 	}
-
+	
 	public void onDismissScreen(Ad ad)
 	{
 		// TODO Auto-generated method stub
+		String callbackID = _listeners.get("dismissScreenListener");
+		
+		defaultListenerUpdate("dismissed screen", callbackID);
 	}
 
 	public void onLeaveApplication(Ad ad)
 	{
-		// TODO Auto-generated method stub
+		String callbackID = _listeners.get("leaveApplicationListener");
 		
+		defaultListenerUpdate("left application.", callbackID);
 	}
 
 	public void onPresentScreen(Ad ad)
 	{
-		// TODO Auto-generated method stub
-		
+		String callbackID = _listeners.get("presentScreenListener");
+		defaultListenerUpdate("presented screen", callbackID);
 	}
 
 	public void onReceiveAd(Ad ad)
 	{
-		// TODO Auto-generated method stub
-		Log.d(LOG, "Received an ad.");
+		String callbackID = _listeners.get("receiveAdListener");
+		defaultListenerUpdate("received ad.", callbackID);
+	}
+	
+	public void defaultListenerUpdate(String msg, String callbackID)
+	{
+		if(callbackID != null)
+		{
+			PluginResult result = sendAsJSON(Status.OK, msg);
+			result.setKeepCallback(true);
+			
+			this.success(result, callbackID);
+		}
 	}
 
 }
