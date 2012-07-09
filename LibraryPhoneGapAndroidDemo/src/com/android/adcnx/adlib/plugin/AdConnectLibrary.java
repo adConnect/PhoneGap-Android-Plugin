@@ -309,17 +309,24 @@ public class AdConnectLibrary extends Plugin implements AdListener
 	
 	private synchronized PluginResult addListener(JSONObject params, String callbackID)
 	{
+		Log.d(LOG, "Adding listener");
 		if(_lib == null)
 		{
 			return sendAsJSON(Status.ERROR, "Library not created.");
 		}
+		
+		Log.d(LOG, "Lib is not null.");
 		
 		if(params == null)
 		{
 			return sendAsJSON(Status.ERROR, "No params have been passed");
 		}
 		
+		Log.d(LOG, "params are not null");
+		
 		String listener = params.optString("listener");
+		
+		Log.d(LOG, "listener is:" +listener);
 		
 		if(listener.equalsIgnoreCase(""))
 		{
@@ -328,6 +335,7 @@ public class AdConnectLibrary extends Plugin implements AdListener
 		
 		String oldCallbackID = _listeners.remove(listener); 
 		
+		Log.d(LOG, "current callbackID for listener: "+oldCallbackID);
 		if(oldCallbackID == null)
 		{
 			_listeners.put(listener, callbackID);
@@ -342,7 +350,6 @@ public class AdConnectLibrary extends Plugin implements AdListener
 		{
 			if(params.optBoolean("doForce"))
 			{
-				
 				_listeners.put(listener,  callbackID);
 				PluginResult result = sendAsJSON(Status.NO_RESULT, listener+"added successfully.");
 				
@@ -500,7 +507,11 @@ public class AdConnectLibrary extends Plugin implements AdListener
 
 	public void onReceiveAd(Ad ad)
 	{
+		Log.d(LOG, "Received ad in Phonegap Plugin. About to alert front-end.");
+		
 		String callbackID = _listeners.get("receiveAdListener");
+		
+		Log.d(LOG, "callbackID: "+callbackID);
 		defaultListenerUpdate("received ad.", callbackID);
 	}
 	

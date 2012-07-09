@@ -73,29 +73,29 @@
 							console.log(resp);
 						}
 						
-						setTimeout(function(){
-							
-							lib.hide(function(resp)
-									{
-										if(resp.msg)
-										{
-											console.log(resp.msg);
-										}
-										
-										else
-										{
-											console.log(resp);
-										}
-										
-										setTimeout(function(){
-											
-											lib.show(success, fail);
-										}, 15000)
-										
-									}, fail);
-						}, 15000);
-						
 					}, fail);
+					
+					lib.addOnReceiveAdListener(function(resp){
+						console.log("first receiveAdListener.");
+						if(resp.msg)
+							console.log(resp.msg);
+						
+						lib.addOnReceiveAdListener(success, function(err){
+							
+							console.log("second receiveAdListener");
+							
+							if(err.msg)
+								console.log(err.msg);
+							
+							lib.addOnReceiveAdListener(function(resp){
+								
+								console.log("third receiveAdListener.");
+								
+								if(resp.msg)
+									console.log(resp.msg);
+							}, fail, true);
+						}, false)
+					}, fail, false);
 				
 				}, fail);
 	}

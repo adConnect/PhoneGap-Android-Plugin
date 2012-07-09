@@ -78,6 +78,21 @@
 				BANNER:{
 					width: 320,
 					height: 50
+				},
+				
+				TABLET_BANNER:{
+					width: 468,
+					height: 60
+				},
+				
+				TABLET_LEADERBOARD: {
+					width: 728,
+					height: 90
+				},
+				
+				TABLET_RECT: {
+					width: 300,
+					height: 250
 				}
 			},
 			
@@ -136,7 +151,7 @@
 				return this.exec("isCreated", [], success, fail);
 			},
 			
-			addListener(listener, doForce, success, fail)
+			addListener: function(listener, doForce, success, fail)
 			{
 				var msg = {
 						listener: listener,
@@ -146,29 +161,29 @@
 				return this.exec("addListener", [msg], success, fail);
 			},
 			
-			addOnFailedToReceiveAdListener(success, fail, doForce)
+			addOnFailedToReceiveAdListener: function(success, fail, doForce)
 			{
-				return this.addListener("onFailedToReceiveAdListener", doForce, success, fail);
+				return this.addListener("failedToReceiveAdListener", doForce, success, fail);
 			},
 			
-			addOnDismissScreenListener(success, fail, doForce)
+			addOnDismissScreenListener: function(success, fail, doForce)
 			{
-				return this.addListener("onDismissScreenListener", doForce, success, fail);
+				return this.addListener("dismissScreenListener", doForce, success, fail);
 			},
 			
-			addOnLeaveApplicationListener(success, fail, doForce)
+			addOnLeaveApplicationListener: function(success, fail, doForce)
 			{
-				return this.addListener("onLeaveApplicationListener", doForce, success, fail);
+				return this.addListener("leaveApplicationListener", doForce, success, fail);
 			},
 			
-			addOnPresentScreenListener(success, fail, doForce)
+			addOnPresentScreenListener: function(success, fail, doForce)
 			{
-				return this.addListener("onPresentScreenListener", doForce, success, fail);
+				return this.addListener("presentScreenListener", doForce, success, fail);
 			},
 			
-			addOnReceiveAdListener(success, fail, doForce)
+			addOnReceiveAdListener: function(success, fail, doForce)
 			{
-				return this.addListener("onReceiveAdListener", doForce, success, fail);
+				return this.addListener("receiveAdListener", doForce, success, fail);
 			},
 			
 			test: function(msg, success, fail) 
