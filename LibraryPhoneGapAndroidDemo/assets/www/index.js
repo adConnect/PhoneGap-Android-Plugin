@@ -1,22 +1,10 @@
-(function(){
-	
-	document.addEventListener("deviceready", run, false);
-	document.addEventListener("pause", onPause, false);
-	document.addEventListener("resume", onResume, false);
-	
-	function onPause()
-	{
-		alert("paused");
-	}
-	
-	function onResume()
-	{
-		alert("resumed");
-	}
-	
+(function (window, document) {
+	"use strict";
+
+	var lib;
+
 	function run()
 	{
-		
 		function success(resp)
 		{
 			console.log("success with:" + resp.msg);
@@ -27,7 +15,7 @@
 			console.log("failed with: " + err.msg);
 		}
 		
-		var lib = window.plugins.adConnectLibrary;
+		lib = window.plugins.adConnectLibrary;
 		console.log("Testing the plugin");
 		
 		var config = {
@@ -100,5 +88,25 @@
 				}, fail);
 	}
 	
-})();
+	function onPause()
+	{
+		if(lib)
+		{
+			lib.pause(success, fail);
+		}
+	}
+	
+	function onResume()
+	{
+		if(lib)
+		{
+			lib.resume(success, fail);
+		}	
+	}
+	
+	document.addEventListener("deviceready", run, false);
+	document.addEventListener("pause", onPause, false);
+	document.addEventListener("resume", onResume, false);
+	
+})(window, document);
 

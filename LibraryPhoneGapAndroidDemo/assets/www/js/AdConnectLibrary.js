@@ -196,6 +196,7 @@
 		
 		PhoneGap.addPlugin("adConnectLibrary", new AdConnectLibrary());
 	});
+	
 })(window, PhoneGap);
 
 
